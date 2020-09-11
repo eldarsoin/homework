@@ -1,0 +1,116 @@
+from flask_restful import Resource, reqparse
+from flask_jwt import jwt_required
+import sqlite3
+
+
+class User:
+    __tablename__ = 'users'
+
+    def __init__(self, _id, username, password):
+        self.id = _id 
+        self.username = username
+        self.password = password
+
+conn = sqlite3.connect('data.db')
+cur = conn.cursor()
+
+create_autos = 'CREATE TABLE IF NOT EXISTS autos (mark TEXT, distance REAL, handler TEXT, stock TEXT, max_speed REAL)'
+cur.execute(create_items)
+
+create_users = 'CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)'
+cur.execute(create_users)       
+conn.close()
+
+class UserResource(Resource):
+    __tablename__ = 'users'
+    
+    parser = reqparse.RequestParser()
+    parser.add_argument("username", type=str, required=True, help="Username field required!")
+    parser.add_argument("password", type=str, required=True, help="Password field required!")
+   
+    @jwt_required()
+    def post(self):
+        request_body = UserResource.parser.parse_args()
+
+        if User.search_username(request_body["username"]):
+            return {"Error" : "User with that username already exists!"}, 400
+
+        conn = sqlite3.connect('data.db')
+        cur = conn.cursor()
+
+        insert_query = "INSERT INTO {} VALUES(NULL, ? ,?)".format(self.__tablename__) 
+        cur.execute(insert_query, (request_body["username"], request_body["password"]))
+        conn.commit()
+        conn.close()
+class Item(Resource):
+    __tablename__ = 'autos'
+
+    parser = reqparse.RequestParser()
+    parser.add_argument('distance', type=int, required=True, help="This field cannot be blank")
+    parser.add_argument('handler', type=str, required=True, help="This field cannot be blank")
+    parser.add_argument('stock', type=str, required=True, help="This field cannot be blank")
+    parser.add_argument('max_speed', type=int, required=True, help="This field cannot be blank")
+
+
+    @jwt_required()
+    def get(self, mark):
+        item = Item.search_name(mark)
+        if item:
+            return {'auto' : mark}, 200
+        return {'Error': "Auto with that mark not found"}, 404
+
+
+    @jwt_required()
+    def post(self, mark):
+        if Item.search_name(auto):
+             return {"Message": "Auto Updated"}, 202
+        return {'Error' : 'Auto with that mark exists'}, 404
+        
+        request_body = Item.parser.parse_args()
+        auto = {'mark' : mark, 'distance' : distance, 'handler': handler, 'stock' : stock, 'max_speed': max_speed}
+       
+
+        conn = sqlite3.connect('data.db')
+        cur = conn.cursor()
+
+        insert_query = "INSERT INTO {} VALUES(?, ?, ?, ?)".format(self.__tablename__)
+        cur.execute(insert_query,)
+
+        conn.commit()
+        conn.close()
+    
+
+    @jwt_required()
+    def delete(self, mark):
+        if Item.search_name(auto):
+            # Тогда его можно удалить
+            conn = sqlite3.connect('data.db')
+            cur = conn.cursor()
+
+            delete_query = "DELETE FROM {} WHERE mark=?".format(self.__tablename__)
+            cur.execute(delete_query, (auto,))
+
+            conn.commit()
+            conn.close()
+
+            return {"Message" : "Item deleted"},202
+
+        return {"Error" : "Auto with that mark not found"}, 404
+
+
+
+class ItemCollection(Resource):
+    __tablename__ = 'autos'
+    def get(self):
+        conn = sqlite3.connect('data.db')
+        cur = conn.cursor()
+
+        select_query = "SELECT * FROM {}".format(self.__tablename__)
+        auto = []
+        for line in cur.execute(select_query):
+            items.append({"auto" : line [0] })
+        
+        conn.close()
+        return {'auto' : mark }, 200
+    return {"Error": "No one autos"},404
+ app.run(port=8080, debug=True)
